@@ -1,0 +1,343 @@
+* { box-sizing: border-box; }
+html, body, #root { margin: 0; min-height: 100%; }
+body { min-width: 320px; }
+button, input { font: inherit; }
+button { border: 0; }
+/* Make the court booking board wider */
+table {
+  min-width: 1400px;
+  width: 100%;
+}
+
+/* Give each court enough room for its full name */
+th,
+td {
+  min-width: 145px;
+}
+
+/* Keep the time column smaller */
+th:first-child,
+td:first-child {
+  min-width: 90px;
+  width: 90px;
+}
+
+/* Allow long court names to display properly */
+th {
+  white-space: normal;
+  line-height: 1.3;
+}
+
+/* Court booking board */
+
+.court-board-grid {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Every schedule row fills the available screen width */
+.court-board-grid > .flex {
+  width: 100%;
+}
+
+/* Keep the time column fixed and small */
+.time-column-header,
+.time-column-cell {
+  flex: 0 0 90px;
+  width: 90px;
+  min-width: 90px;
+}
+
+/* Divide the remaining width equally between all visible courts */
+.court-column-header,
+.court-slot {
+  flex: 1 1 0;
+  width: 0;
+  min-width: 0;
+}
+
+/* Court names can wrap instead of making columns wider */
+.court-name {
+  width: 100%;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.15;
+  text-align: center;
+  font-size: 12px;
+}
+
+/* Slot text stays inside its own column */
+.slot-label {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.15;
+  white-space: pre-line;
+}
+
+@media (max-width: 640px) {
+  .schedule-row {
+    width: max-content;
+  }
+
+  .time-column-cell {
+    width: 95px !important;
+    min-width: 95px !important;
+    flex: 0 0 95px !important;
+  }
+
+  .court-slot {
+    width: 105px !important;
+    min-width: 105px !important;
+    flex: 0 0 105px !important;
+  }
+
+  .slot-label {
+    white-space: normal;
+    text-align: center;
+    line-height: 1.15;
+  }
+}
+@media (max-width: 640px) {
+  .schedule-scroll {
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .court-board-grid {
+    width: max-content;
+    min-width: 100%;
+  }
+
+  .schedule-header-row,
+  .schedule-row {
+    width: max-content;
+  }
+
+  .time-column-header,
+  .time-column-cell {
+    width: 95px !important;
+    min-width: 95px !important;
+    flex: 0 0 95px !important;
+  }
+
+  .court-column-header,
+  .court-slot {
+    width: 105px !important;
+    min-width: 105px !important;
+    flex: 0 0 105px !important;
+  }
+
+  .court-name {
+    white-space: normal;
+    line-height: 1.15;
+    word-break: normal;
+  }
+
+  .slot-label {
+    white-space: normal;
+    text-align: center;
+    line-height: 1.15;
+  }
+}
+@media (max-width: 640px) {
+  .admin-header-inner {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .admin-nav {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr);
+    width: 100%;
+  }
+
+  .admin-nav button {
+    width: 100%;
+    min-width: 0;
+    padding: 10px 6px !important;
+    font-size: 12px;
+  }
+
+  .admin-header-actions {
+    width: 100%;
+  }
+
+  .admin-header-actions button {
+    flex: 1;
+  }
+}
+@media (max-width: 640px) {
+  .payment-card {
+    padding: 14px !important;
+  }
+
+  .verify-payment-grid {
+  grid-template-columns: 1fr 1fr !important;
+}
+
+  .payment-actions {
+    flex-direction: column-reverse !important;
+  }
+
+  .payment-actions button {
+    width: 100%;
+  }
+  .verify-payment-grid > div {
+  min-width: 0;
+}
+
+.verify-payment-grid strong {
+  word-break: break-word;
+}
+}
+
+@media (max-width: 640px) {
+  .confirmed-booking-actions {
+    width: 100%;
+  }
+
+  .confirmed-booking-actions button {
+    width: 100%;
+  }
+}
+@media (max-width: 640px) {
+  .history-filters {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .history-filters input {
+    grid-column: 1 / -1;
+    width: 100%;
+    min-width: 0 !important;
+  }
+
+  .history-filters button {
+    width: 100%;
+  }
+}
+@media (max-width: 640px) {
+  .admin-schedule-scroll {
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .admin-schedule-table {
+    width: max-content !important;
+    min-width: 100% !important;
+    table-layout: auto !important;
+  }
+
+  .admin-schedule-table th:first-child,
+  .admin-schedule-table td:first-child {
+    width: 95px !important;
+    min-width: 95px !important;
+    position: sticky;
+    left: 0;
+    z-index: 3;
+  }
+
+  .admin-schedule-table th:not(:first-child),
+  .admin-schedule-table td:not(:first-child) {
+    width: 110px !important;
+    min-width: 110px !important;
+  }
+
+  .admin-schedule-table th {
+    white-space: normal;
+    line-height: 1.15;
+  }
+}
+.mobile-checkout-bar {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .mobile-checkout-bar {
+    position: fixed;
+    left: 50%;
+    bottom: 12px;
+    transform: translateX(-50%);
+
+    width: calc(100% - 28px);
+    max-width: 460px;
+
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    padding: 10px;
+    border-radius: 10px;
+
+    background: #1c1d22;
+    border: 1px solid #33343b;
+
+    z-index: 50;
+  }
+
+  .mobile-checkout-total {
+    min-width: 95px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .mobile-checkout-total span {
+    font-size: 9px;
+    opacity: 0.6;
+  }
+
+  .mobile-checkout-total strong {
+    font-size: 17px;
+  }
+
+  .mobile-checkout-button {
+    flex: 1;
+    min-height: 46px;
+
+    border: none;
+    border-radius: 7px;
+
+    background: #e8592b;
+    color: #141417;
+
+    font-weight: 700;
+    font-size: 13px;
+  }
+  @media (max-width: 640px) {
+  body {
+    padding-bottom: 85px;
+  }
+}
+}
+
+@media (max-width: 640px) {
+  .payment-layout {
+    grid-template-columns: 1fr !important;
+  }
+}
+@media (max-width: 640px) {
+  .payment-modal-content {
+    max-height: calc(100vh - 24px) !important;
+    overflow-y: auto;
+  }
+}
+@media (max-width: 640px) {
+  .checkout-modal-content {
+    max-height: calc(100vh - 24px);
+    overflow-y: auto;
+  }
+}
+@media (max-width: 640px) {
+  .checkout-overlay {
+    align-items: flex-start !important;
+    padding-top: 12px !important;
+    padding-bottom: 12px !important;
+  }
+}
