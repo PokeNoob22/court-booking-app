@@ -16,7 +16,7 @@ const storage = {
 
 const FONT_IMPORT = `@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap');`;
 
-const COLORS = {
+const DARK_COLORS = {
   ink: "#141417",
   panel: "#1C1D22",
   panelAlt: "#232429",
@@ -34,6 +34,41 @@ const COLORS = {
   redBorder: "rgba(216,72,61,0.35)",
 };
 
+const LIGHT_COLORS = {
+  // Softer blue-gray page background
+  ink: "#E7EDF5",
+
+  // Off-white cards instead of pure white
+  panel: "#F3F6FA",
+
+  // Slightly darker secondary surfaces
+  panelAlt: "#E5EBF3",
+
+  // Soft borders
+  line: "#C4CFDC",
+
+  // Dark navy text
+  chalk: "#172235",
+
+  // Muted secondary text
+  chalkDim: "#63758A",
+
+  // Purple accent
+  maple: "#7C3AED",
+
+  // Electric blue primary accent
+  orange: "#2563EB",
+  orangeDim: "rgba(37,99,235,0.10)",
+
+  green: "#0F9F70",
+  greenDim: "rgba(15,159,112,0.10)",
+  greenBorder: "rgba(15,159,112,0.30)",
+
+  red: "#DC4C52",
+  redDim: "rgba(220,76,82,0.09)",
+  redBorder: "rgba(220,76,82,0.28)",
+};
+
 const DEFAULT_COURTS = [
   { id: "c1", name: "Court 1" },
   { id: "c2", name: "Court 2" },
@@ -45,7 +80,6 @@ const DEFAULT_COURTS = [
 
 const START_HOUR = 6;
 const END_HOUR = 23; // exclusive — last bookable slot starts at 22:00
-const MAX_DAYS_AHEAD = 60;
 const POLL_MS = 12000;
 
 function pad(n) {
@@ -81,6 +115,24 @@ function addDays(d, n) {
   copy.setDate(copy.getDate() + n);
   return copy;
 }
+
+function maxCustomerBookingDate(fromDate) {
+  const result = new Date(fromDate);
+
+  // Add 1 calendar month
+  result.setMonth(result.getMonth() + 1);
+
+  // Then add 2 weeks
+  result.setDate(result.getDate() + 14);
+
+  return result;
+}
+
+function parseDateInput(value) {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
 function initials(name) {
   return name
     .trim()
@@ -88,6 +140,196 @@ function initials(name) {
     .slice(0, 2)
     .map((w) => w[0]?.toUpperCase() || "")
     .join("");
+}
+
+function isValidPhilippineMobile(value) {
+  const cleaned = value.replace(/[\s-]/g, "");
+
+  return /^(09\d{9}|9\d{9}|\+639\d{9}|639\d{9})$/.test(cleaned);
+}
+
+function RentalSection({
+  title,
+  items,
+  quantities,
+  onChange,
+  colors,
+}) {
+  if (!items.length) return null;
+
+  return (
+    <div style={{ marginBottom: 26 }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          marginBottom: 12,
+        }}
+      >
+        <div
+          style={{
+            height: 1,
+            flex: 1,
+            background: colors.line,
+          }}
+        />
+
+        <div
+          style={{
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: 12,
+            letterSpacing: "0.12em",
+            color: colors.orange,
+            textTransform: "uppercase",
+          }}
+        >
+          {title}
+        </div>
+
+        <div
+          style={{
+            height: 1,
+            flex: 1,
+            background: colors.line,
+          }}
+        />
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gap: 10,
+        }}
+      >
+        {items.map((item) => {
+          const quantity = Number(
+            quantities[item.id] || 0
+          );
+
+          return (
+            <div
+              key={item.id}
+              style={{
+                display: "grid",
+                gridTemplateColumns:
+                  "72px minmax(0,1fr) auto",
+                alignItems: "center",
+                gap: 12,
+                padding: 10,
+                borderRadius: 8,
+                background: colors.panelAlt,
+                border: `1px solid ${colors.line}`,
+              }}
+            >
+              {item.image_url ? (
+                <img
+                  src={item.image_url}
+                  alt={item.name}
+                  style={{
+                    width: 72,
+                    height: 72,
+                    borderRadius: 6,
+                    objectFit: "cover",
+                  }}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: 72,
+                    height: 72,
+                    borderRadius: 6,
+                    background: colors.ink,
+                  }}
+                />
+              )}
+
+              <div>
+                <div
+                  style={{
+                    fontWeight: 600,
+                    marginBottom: 3,
+                  }}
+                >
+                  {item.name}
+                </div>
+
+                <div
+                  style={{
+                    color: colors.chalkDim,
+                    fontSize: 13,
+                  }}
+                >
+                  ₱{Number(item.price).toLocaleString()}
+                </div>
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() =>
+                    onChange(item.id, -1)
+                  }
+                  disabled={quantity === 0}
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: 6,
+                    border: `1px solid ${colors.line}`,
+                    background: colors.ink,
+                    color: colors.chalk,
+                    cursor:
+                      quantity === 0
+                        ? "default"
+                        : "pointer",
+                    opacity:
+                      quantity === 0 ? 0.4 : 1,
+                  }}
+                >
+                  −
+                </button>
+
+                <span
+                  style={{
+                    minWidth: 22,
+                    textAlign: "center",
+                    fontWeight: 700,
+                  }}
+                >
+                  {quantity}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    onChange(item.id, 1)
+                  }
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: 6,
+                    border: `1px solid ${colors.orange}`,
+                    background: colors.orange,
+                    color: colors.ink,
+                    cursor: "pointer",
+                    fontWeight: 700,
+                  }}
+                >
+                  +
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 export default function CourtBooking() {
@@ -114,14 +356,53 @@ export default function CourtBooking() {
   const [selectedSlots, setSelectedSlots] = useState([]);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [selectedSport, setSelectedSport] = useState(null);
+
+  const [rentalItems, setRentalItems] = useState([]);
+  const [rentalsLoading, setRentalsLoading] = useState(false);
+  const [rentalsOpen, setRentalsOpen] = useState(false);
+  const [rentalQuantities, setRentalQuantities] = useState({});
   const bottomCheckoutRef = useRef(null);
+
   const [bottomCheckoutVisible, setBottomCheckoutVisible] = useState(false);
+  const [lightMode, setLightMode] = useState(() => {
+  return window.localStorage.getItem("court-theme") === "light";
+  });
+  const COLORS = lightMode ? LIGHT_COLORS : DARK_COLORS;
 
   const showToast = useCallback((msg) => {
     setToast(msg);
     if (toastTimer.current) clearTimeout(toastTimer.current);
     toastTimer.current = setTimeout(() => setToast(null), 3200);
   }, []);
+
+  const datePickerRef = useRef(null);
+
+  const loadRentalItems = useCallback(async () => {
+    setRentalsLoading(true);
+
+    try {
+      const { data, error } = await supabase
+        .from("rental_items")
+        .select(`
+          id,
+          name,
+          price,
+          sport_type,
+          image_url
+        `)
+        .eq("is_active", true)
+        .order("name", { ascending: true });
+
+      if (error) throw error;
+
+      setRentalItems(data || []);
+    } catch (error) {
+      console.error("Error loading rental items:", error);
+      showToast("Couldn't load rentals.");
+    } finally {
+      setRentalsLoading(false);
+    }
+  }, [showToast]);
 
   const loadCourts = useCallback(async () => {
     try {
@@ -178,6 +459,22 @@ export default function CourtBooking() {
     }
   }, [showToast]);
 
+  const changeRentalQuantity = (itemId, amount) => {
+    setRentalQuantities((current) => {
+      const oldQuantity = Number(current[itemId] || 0);
+      const newQuantity = Math.max(0, oldQuantity + amount);
+
+      return {
+        ...current,
+        [itemId]: newQuantity,
+      };
+    });
+  };
+
+  const clearRentals = () => {
+    setRentalQuantities({});
+  };
+
   const toggleSelectedSlot = (court, hour) => {
     const key = `${court.id}__${dateKey(selectedDate)}__${hour}`;
 
@@ -206,6 +503,10 @@ export default function CourtBooking() {
   useEffect(() => {
     loadCourts();
   }, [loadCourts]);
+
+  useEffect(() => {
+    loadRentalItems();
+  }, [loadRentalItems]);
 
   useEffect(() => {
     loadBookings(selectedDate);
@@ -256,6 +557,19 @@ export default function CourtBooking() {
     }, POLL_MS);
     return () => clearInterval(pollTimer.current);
   }, [selectedDate, loadBookings]);
+
+  useEffect(() => {
+    window.localStorage.setItem(
+      "court-theme",
+      lightMode ? "light" : "dark"
+    );
+
+    document.documentElement.style.colorScheme =
+      lightMode ? "light" : "dark";
+
+    document.body.style.background =
+      lightMode ? LIGHT_COLORS.ink : DARK_COLORS.ink;
+  }, [lightMode]);
 
   useEffect(() => {
     const target = bottomCheckoutRef.current;
@@ -365,16 +679,34 @@ export default function CourtBooking() {
         start_hour: slot.hour,
       }));
 
+      const rentals = rentalItems
+        .filter(
+          (item) =>
+            Number(rentalQuantities[item.id] || 0) > 0
+        )
+        .map((item) => ({
+          rental_item_id: item.id,
+          quantity: Number(rentalQuantities[item.id]),
+        }));
+
+      if (!isValidPhilippineMobile(mobile)) {
+        showToast(
+          "Please enter a valid Philippine mobile number, e.g. 09171234567 or 9171234567."
+        );
+        return;
+      }
+
       const { data, error } = await supabase.rpc(
-        "create_booking_order_hold",
-        {
-          p_customer_name: name,
-          p_customer_mobile: mobile,
-          p_customer_email: email || null,
-          p_payment_method: paymentMethod,
-          p_slots: slots,
-        }
-      );
+      "create_booking_order_hold_with_rentals",
+      {
+        p_customer_name: name,
+        p_customer_mobile: mobile,
+        p_customer_email: email || null,
+        p_payment_method: paymentMethod,
+        p_slots: slots,
+        p_rentals: rentals,
+      }
+    );
 
       if (error) throw error;
 
@@ -489,8 +821,12 @@ export default function CourtBooking() {
   };
 
   const canGoPrev = !isSameDay(selectedDate, now) && selectedDate > now;
-  const daysAhead = Math.round((selectedDate - new Date(now.toDateString())) / 86400000);
-  const canGoNext = daysAhead < MAX_DAYS_AHEAD;
+  const maxBookingDate = maxCustomerBookingDate(
+  new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  );
+
+  const canGoNext =
+    dateKey(selectedDate) < dateKey(maxBookingDate);
 
   const isToday = isSameDay(selectedDate, now);
   const currentHour = now.getHours();
@@ -519,6 +855,41 @@ export default function CourtBooking() {
     (total, slot) => total + Number(slot.price || 0),
     0
   );
+
+  const rentalTotal = rentalItems.reduce((total, item) => {
+    const quantity = Number(rentalQuantities[item.id] || 0);
+
+    return total + Number(item.price || 0) * quantity;
+  }, 0);
+
+  const bookingSport =
+    selectedSport === "basketball"
+      ? "basketball"
+      : "pickleball";
+
+      const primaryRentalItems = rentalItems.filter((item) => {
+        if (bookingSport === "basketball") {
+          return (
+            item.sport_type === "basketball" ||
+            item.sport_type === "both"
+          );
+        }
+
+        return (
+          item.sport_type === "pickleball" ||
+          item.sport_type === "both"
+        );
+      });
+
+      const secondaryRentalItems = rentalItems.filter((item) => {
+        if (bookingSport === "basketball") {
+          return item.sport_type === "pickleball";
+        }
+
+        return item.sport_type === "basketball";
+      });
+
+  const checkoutTotal = selectedTotal + rentalTotal;
 
   const groupedSelectedSlots = (() => {
     const groups = [];
@@ -562,6 +933,28 @@ export default function CourtBooking() {
 
     return groups;
   })();
+
+  const basketballHoursSelected = selectedSlots.filter((slot) => {
+    const court = (courts || []).find(
+      (c) => String(c.id) === String(slot.courtId)
+    );
+
+    return court?.court_type === "basketball";
+  }).length;
+
+  const handleProceedToPayment = () => {
+    if (
+      selectedSport === "basketball" &&
+      basketballHoursSelected < 2
+    ) {
+      showToast(
+        "Basketball bookings require a minimum of 2 hours."
+      );
+      return;
+    }
+
+    setCheckoutOpen(true);
+  };
 
   const bookingBlocksResource = (booking) => {
     if (!booking) return false;
@@ -722,6 +1115,8 @@ export default function CourtBooking() {
 
   return (
     <div
+      className="theme-shell"
+      data-theme={lightMode ? "light" : "dark"}
       style={{
         minHeight: "100vh",
         background: COLORS.ink,
@@ -729,7 +1124,25 @@ export default function CourtBooking() {
         fontFamily: "'Work Sans', sans-serif",
       }}
     >
-      <style>{FONT_IMPORT}</style>
+      <style>{`
+        ${FONT_IMPORT}
+
+        .theme-shell,
+        .theme-shell * {
+          transition:
+            background-color 0.22s ease,
+            border-color 0.22s ease,
+            color 0.22s ease,
+            box-shadow 0.22s ease;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .theme-shell,
+          .theme-shell * {
+            transition: none !important;
+          }
+        }
+      `}</style>
 
       {/* Header */}
       <div
@@ -770,6 +1183,75 @@ export default function CourtBooking() {
               Tap an open slot to book it instantly.
             </p>
           </div>
+
+          <button
+            type="button"
+            onClick={() => setLightMode((current) => !current)}
+            aria-label={
+              lightMode
+                ? "Switch to dark mode"
+                : "Switch to light mode"
+            }
+            title={
+              lightMode
+                ? "Switch to dark mode"
+                : "Switch to light mode"
+            }
+            className="shrink-0"
+            style={{
+              width: 96,
+              height: 38,
+              borderRadius: 999,
+              position: "relative",
+              display: "flex",
+              alignItems: "center",
+              background: COLORS.panel,
+              border: `1px solid ${
+                lightMode ? LIGHT_COLORS.orange : COLORS.line
+              }`,
+              cursor: "pointer",
+              boxShadow: lightMode
+                ? "0 6px 22px rgba(37,99,235,0.12)"
+                : "none",
+            }}
+          >
+            <span
+              style={{
+                position: "absolute",
+                left: lightMode ? 62 : 4,
+                width: 28,
+                height: 28,
+                borderRadius: 999,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: lightMode
+                  ? LIGHT_COLORS.orange
+                  : DARK_COLORS.panelAlt,
+                color: lightMode
+                  ? "#FFFFFF"
+                  : DARK_COLORS.chalk,
+                fontSize: 15,
+                transition: "left 0.22s ease",
+              }}
+            >
+              {lightMode ? "☀" : "☾"}
+            </span>
+
+            <span
+              style={{
+                marginLeft: lightMode ? 9 : 38,
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: 9,
+                fontWeight: 700,
+                letterSpacing: "0.08em",
+                color: COLORS.chalkDim,
+              }}
+            >
+              {lightMode ? "LIGHT" : "DARK"}
+            </span>
+          </button>
+
           {/* <button
             onClick={() => setShowManage((s) => !s)}
             className="shrink-0 text-xs px-3 py-2 rounded-md transition-colors"
@@ -917,7 +1399,23 @@ export default function CourtBooking() {
           >
             ‹ PREV
           </button>
-          <div className="text-center">
+          <div
+            className="text-center"
+            style={{
+              position: "relative",
+              cursor: "pointer",
+              padding: "6px 18px",
+              borderRadius: 8,
+            }}
+            title="Choose a date"
+            onClick={() => {
+              if (datePickerRef.current?.showPicker) {
+                datePickerRef.current.showPicker();
+              } else {
+                datePickerRef.current?.click();
+              }
+            }}
+          >
             <div
               style={{
                 fontFamily: "'Oswald', sans-serif",
@@ -941,6 +1439,36 @@ export default function CourtBooking() {
                 TODAY
               </div>
             )}
+
+            <input
+              ref={datePickerRef}
+              type="date"
+              min={dateKey(
+                new Date(
+                  now.getFullYear(),
+                  now.getMonth(),
+                  now.getDate()
+                )
+              )}
+              max={dateKey(maxBookingDate)}
+              value={dateKey(selectedDate)}
+              onChange={(e) => {
+                if (!e.target.value) return;
+
+                const pickedDate = parseDateInput(e.target.value);
+
+                setSelectedSlots([]);
+                setSelectedDate(pickedDate);
+              }}
+              style={{
+                position: "absolute",
+                width: 1,
+                height: 1,
+                opacity: 0,
+                pointerEvents: "none",
+              }}
+            />
+
           </div>
           <button
             onClick={() => canGoNext && setSelectedDate((d) => addDays(d, 1))}
@@ -1124,6 +1652,53 @@ export default function CourtBooking() {
             No courts yet. Open "Manage courts" to add one.
           </div>
         ) : (
+
+          <>
+
+          {selectedSport === "basketball" && (
+            <div
+              style={{
+                marginTop: 12,
+                marginBottom: 14,
+                padding: "10px 12px",
+                borderRadius: 7,
+                background: COLORS.panel,
+                border: `1px solid ${
+                  basketballHoursSelected >= 2
+                    ? COLORS.green
+                    : COLORS.orange
+                }`,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: 12,
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 12,
+                  color: COLORS.chalkDim,
+                }}
+              >
+                Minimum basketball booking
+              </span>
+
+              <strong
+                style={{
+                  fontSize: 13,
+                  color:
+                    basketballHoursSelected >= 2
+                      ? COLORS.green
+                      : COLORS.orange,
+                }}
+              >
+                {basketballHoursSelected >= 2
+                  ? `${basketballHoursSelected} HOURS SELECTED ✓`
+                  : `${basketballHoursSelected} / 2 HOURS SELECTED`}
+              </strong>
+            </div>
+          )}
+
           <div
             className="rounded-lg schedule-scroll"
             style={{
@@ -1409,6 +1984,7 @@ export default function CourtBooking() {
               })}
             </div>
           </div>
+          </>
         )}
 
         {selectedSlots.length > 0 && (
@@ -1487,7 +2063,7 @@ export default function CourtBooking() {
 
             <button
               ref={bottomCheckoutRef}
-              onClick={() => setCheckoutOpen(true)}
+              onClick={handleProceedToPayment}
               className="w-full py-3 rounded-md font-medium"
               style={{
                 background: COLORS.orange,
@@ -1508,10 +2084,199 @@ export default function CourtBooking() {
 
       </div>
 
+      {rentalsOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{
+            background: "rgba(0,0,0,0.72)",
+          }}
+          onClick={() => setRentalsOpen(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full rounded-xl"
+            style={{
+              maxWidth: 760,
+              maxHeight: "calc(100vh - 32px)",
+              overflowY: "auto",
+              background: COLORS.panel,
+              border: `1px solid ${COLORS.line}`,
+              padding: 20,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "flex-start",
+                gap: 16,
+                marginBottom: 20,
+              }}
+            >
+              <div>
+                <div
+                  style={{
+                    color: COLORS.orange,
+                    fontSize: 11,
+                    letterSpacing: "0.12em",
+                    marginBottom: 3,
+                  }}
+                >
+                  ADD TO YOUR BOOKING
+                </div>
+
+                <h2
+                  style={{
+                    margin: 0,
+                    fontFamily: "'Oswald', sans-serif",
+                    fontSize: 28,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Rentals
+                </h2>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setRentalsOpen(false)}
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: 6,
+                  border: `1px solid ${COLORS.line}`,
+                  background: COLORS.panelAlt,
+                  color: COLORS.chalk,
+                  cursor: "pointer",
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {rentalsLoading ? (
+              <div
+                style={{
+                  padding: 30,
+                  textAlign: "center",
+                  color: COLORS.chalkDim,
+                }}
+              >
+                Loading rentals...
+              </div>
+            ) : rentalItems.length === 0 ? (
+              <div
+                style={{
+                  padding: 30,
+                  textAlign: "center",
+                  color: COLORS.chalkDim,
+                }}
+              >
+                No rentals are currently available.
+              </div>
+            ) : (
+              <>
+                <RentalSection
+                  title={
+                    bookingSport === "basketball"
+                      ? "Basketball"
+                      : "Pickleball"
+                  }
+                  items={primaryRentalItems}
+                  quantities={rentalQuantities}
+                  onChange={changeRentalQuantity}
+                  colors={COLORS}
+                />
+
+                <RentalSection
+                  title={
+                    bookingSport === "basketball"
+                      ? "Pickleball"
+                      : "Basketball"
+                  }
+                  items={secondaryRentalItems}
+                  quantities={rentalQuantities}
+                  onChange={changeRentalQuantity}
+                  colors={COLORS}
+                />
+
+                <div
+                  style={{
+                    marginTop: 22,
+                    paddingTop: 18,
+                    borderTop: `1px solid ${COLORS.line}`,
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      marginBottom: 16,
+                    }}
+                  >
+                    <span style={{ color: COLORS.chalkDim }}>
+                      Rental subtotal
+                    </span>
+
+                    <strong style={{ fontSize: 20 }}>
+                      ₱{rentalTotal.toLocaleString()}
+                    </strong>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: 10,
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={clearRentals}
+                      style={{
+                        flex: 1,
+                        padding: "12px",
+                        borderRadius: 6,
+                        border: `1px solid ${COLORS.line}`,
+                        background: "transparent",
+                        color: COLORS.chalkDim,
+                        cursor: "pointer",
+                      }}
+                    >
+                      CLEAR
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setRentalsOpen(false)}
+                      style={{
+                        flex: 2,
+                        padding: "12px",
+                        borderRadius: 6,
+                        border: 0,
+                        background: COLORS.orange,
+                        color: COLORS.ink,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                      }}
+                    >
+                      ADD RENTALS
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {checkoutOpen && (
         <div
           className="checkout-overlay fixed inset-0 z-40 flex items-center justify-center p-4"
-          style={{ background: "rgba(0,0,0,0.65)" }}
+          style={{
+            background: "rgba(0,0,0,0.65)",
+            alignItems: "flex-start",
+            overflowY: "auto",
+          }}
           onClick={() => {
             setCheckoutOpen(false);
             setPaymentMethod(null);
@@ -1519,10 +2284,13 @@ export default function CourtBooking() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="checkout-modal-content w-full max-w-md rounded-xl p-5"
+            className="checkout-modal-content w-full max-w-md rounded-xl p-4 sm:p-5"
             style={{
               background: COLORS.panel,
               border: `1px solid ${COLORS.line}`,
+              maxHeight: "calc(100vh - 24px)",
+              overflowY: "auto",
+              margin: "12px 0",
             }}
           >
             <div
@@ -1615,26 +2383,101 @@ export default function CourtBooking() {
               </div>
 
               <div
-                className="flex justify-between"
                 style={{
                   marginTop: 6,
                   paddingTop: 8,
-      borderTop: `1px solid ${COLORS.line}`,
-    }}
-  >
-    <span style={{ color: COLORS.chalkDim }}>
-      Total
-    </span>
+                  borderTop: `1px solid ${COLORS.line}`,
+                }}
+              >
+                <div
+                  className="flex justify-between"
+                  style={{ marginBottom: 6 }}
+                >
+                  <span style={{ color: COLORS.chalkDim }}>
+                    Court subtotal
+                  </span>
 
-    <span
-      style={{
-        fontWeight: 700,
-        fontSize: 17,
-      }}
-    >
-      ₱{selectedTotal.toLocaleString()}
-    </span>
-  </div>
+                  <span>
+                    ₱{selectedTotal.toLocaleString()}
+                  </span>
+                </div>
+
+                {rentalItems
+                  .filter(
+                    (item) =>
+                      Number(rentalQuantities[item.id] || 0) > 0
+                  )
+                  .map((item) => {
+                    const quantity = Number(
+                      rentalQuantities[item.id] || 0
+                    );
+
+                    const lineTotal =
+                      Number(item.price || 0) * quantity;
+
+                    return (
+                      <div
+                        key={item.id}
+                        className="flex justify-between"
+                        style={{
+                          marginBottom: 5,
+                          gap: 12,
+                        }}
+                      >
+                        <span
+                          style={{
+                            color: COLORS.chalkDim,
+                            fontSize: 12,
+                          }}
+                        >
+                          {quantity}× {item.name}
+                        </span>
+
+                        <span
+                          style={{
+                            fontSize: 12,
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          ₱{lineTotal.toLocaleString()}
+                        </span>
+                      </div>
+                    );
+                  })}
+
+                {rentalTotal > 0 && (
+                  <div
+                    className="flex justify-between"
+                    style={{
+                      marginTop: 6,
+                      marginBottom: 8,
+                    }}
+                  >
+                    <span style={{ color: COLORS.chalkDim }}>
+                      Rental subtotal
+                    </span>
+
+                    <span>
+                      ₱{rentalTotal.toLocaleString()}
+                    </span>
+                  </div>
+                )}
+
+                <div
+                  className="flex justify-between"
+                  style={{
+                    borderTop: `1px solid ${COLORS.line}`,
+                    paddingTop: 8,
+                    fontWeight: 700,
+                  }}
+                >
+                  <span>Total</span>
+
+                  <span style={{ fontSize: 18 }}>
+                    ₱{checkoutTotal.toLocaleString()}
+                  </span>
+                </div>
+              </div>
 </div>
 
             <label
@@ -1672,9 +2515,12 @@ export default function CourtBooking() {
             </label>
 
             <input
+              type="tel"
+              inputMode="numeric"
+              maxLength={13}
+              placeholder="09171234567"
               value={mobileInput}
               onChange={(e) => setMobileInput(e.target.value)}
-              placeholder="e.g. 09171234567"
               className="w-full px-3 py-2 rounded-md text-sm outline-none mb-4"
               style={{
                 background: COLORS.ink,
@@ -1702,6 +2548,67 @@ export default function CourtBooking() {
                 color: COLORS.chalk,
               }}
             />
+
+            <div
+              style={{
+                marginBottom: 20,
+                padding: 14,
+                borderRadius: 8,
+                background: COLORS.panelAlt,
+                border: `1px solid ${COLORS.line}`,
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: 12,
+                }}
+              >
+                <div>
+                  <div
+                    style={{
+                      fontSize: 12,
+                      color: COLORS.chalkDim,
+                      marginBottom: 3,
+                    }}
+                  >
+                    RENTALS
+                  </div>
+
+                  <div
+                    style={{
+                      fontSize: 13,
+                      color: COLORS.chalk,
+                    }}
+                  >
+                    {rentalTotal > 0
+                      ? `₱${rentalTotal.toLocaleString()} added`
+                      : "Add equipment to your booking"}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setRentalsOpen(true)}
+                  style={{
+                    padding: "10px 14px",
+                    borderRadius: 6,
+                    border: `1px solid ${COLORS.orange}`,
+                    background: "transparent",
+                    color: COLORS.orange,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {rentalTotal > 0
+                    ? "EDIT RENTALS"
+                    : "+ ADD RENTALS"}
+                </button>
+              </div>
+            </div>
 
             <div
               className="text-xs mb-2"
@@ -1847,9 +2754,12 @@ export default function CourtBooking() {
                 </label>
 
                 <input
+                  type="tel"
+                  inputMode="numeric"
+                  maxLength={13}
+                  placeholder="09171234567"
                   value={mobileInput}
                   onChange={(e) => setMobileInput(e.target.value)}
-                  placeholder="e.g. 09171234567"
                   className="w-full px-3 py-2 rounded-md text-sm outline-none mb-4"
                   style={{
                     background: COLORS.ink,
@@ -1939,7 +2849,7 @@ export default function CourtBooking() {
       {paymentBooking && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: "rgba(0,0,0,0.70)" }}
+          style={{ background: "rgba(0,0,0,0.70)", overflowY: "auto", }}
         >
           <div
             className="payment-modal-content relative w-full max-w-4xl rounded-xl p-6"
@@ -1947,6 +2857,7 @@ export default function CourtBooking() {
               background: COLORS.panel,
               border: `1px solid ${COLORS.line}`,
               maxHeight: "95vh",
+              overflowY: "auto",
             }}
           >
             {/* Close button - cancellation behavior gets wired next */}
@@ -2125,28 +3036,61 @@ export default function CourtBooking() {
                     .
                   </p>
 
-                  <p
-                    className="mt-2 text-xs"
-                    style={{ color: COLORS.orange }}
-                  >
-                    Complete your payment, then click the button below before the timer expires.
-                  </p>
-                </div>
-
-                {paymentBooking?.status !== "payment_submitted" && (
-                  <button
-                    onClick={submitPayment}
-                    disabled={saving}
-                    className="w-full mt-5 py-3 rounded-md font-medium"
+                  <div
                     style={{
-                      background: COLORS.orange,
-                      color: COLORS.ink,
-                      opacity: saving ? 0.6 : 1,
+                      marginTop: 14,
+                      padding: "12px 14px",
+                      borderRadius: 8,
+                      background: COLORS.panelAlt,
+                      border: `1px solid ${COLORS.line}`,
                     }}
                   >
-                    {saving ? "SUBMITTING PAYMENT..." : "I HAVE PAID — SUBMIT PAYMENT"}
-                  </button>
-                )}
+                    <div
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 700,
+                        color: COLORS.chalk,
+                        marginBottom: 8,
+                      }}
+                    >
+                      HOW TO PAY
+                    </div>
+
+                    <div
+                      style={{
+                        fontSize: 12,
+                        lineHeight: 1.6,
+                        color: COLORS.chalkDim,
+                      }}
+                    >
+                      <div>
+                        <strong style={{ color: COLORS.chalk }}>
+                          Using another device:
+                        </strong>{" "}
+                        Open GCash and scan the QR code.
+                      </div>
+
+                      <div style={{ marginTop: 6 }}>
+                        <strong style={{ color: COLORS.chalk }}>
+                          Using this phone:
+                        </strong>{" "}
+                        Screenshot or save the QR code, then open GCash → Scan QR → Upload QR.
+                      </div>
+
+                      <div style={{ marginTop: 6, color: COLORS.orange }}>
+                        Send the exact amount shown above.
+                      </div>
+
+                      <div style={{ marginTop: 6 }}>
+                        After paying, return to this page and tap{" "}
+                        <strong style={{ color: COLORS.chalk }}>
+                          I HAVE PAID
+                        </strong>
+                        .
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
                 {paymentBooking?.status === "payment_submitted" && (
                   <div className="mt-5">
@@ -2309,6 +3253,25 @@ export default function CourtBooking() {
                         ₱{paymentAmount.toLocaleString()}
                       </strong>
                     </div>
+
+                    {paymentBooking?.status !== "payment_submitted" && (
+                      <button
+                        onClick={submitPayment}
+                        disabled={saving}
+                        className="w-full mt-4 py-3 rounded-md font-medium"
+                        style={{
+                          background: COLORS.orange,
+                          color: COLORS.ink,
+                          opacity: saving ? 0.6 : 1,
+                          cursor: saving ? "default" : "pointer",
+                        }}
+                      >
+                        {saving
+                          ? "SUBMITTING PAYMENT..."
+                          : "I HAVE PAID — SUBMIT PAYMENT"}
+                      </button>
+                    )}
+
                   </div>
                 ) : (
                   <div className="w-full">
@@ -2351,7 +3314,7 @@ export default function CourtBooking() {
           </div>
 
           <button
-            onClick={() => setCheckoutOpen(true)}
+            onClick={handleProceedToPayment}
             className="mobile-checkout-button"
           >
             PROCEED TO PAYMENT
@@ -2360,14 +3323,69 @@ export default function CourtBooking() {
       )}
 
       {/* Toast */}
-      {toast && (
-        <div
-          className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-md text-sm"
-          style={{ background: COLORS.panelAlt, border: `1px solid ${COLORS.line}`, color: COLORS.chalk }}
-        >
-          {toast}
-        </div>
-      )}
+        {toast && (
+          <div
+            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[9999]"
+            style={{
+              width: "calc(100% - 32px)",
+              maxWidth: "420px",
+              background: COLORS.panel,
+              border: `1px solid ${COLORS.orange}`,
+              borderRadius: "12px",
+              padding: "16px 18px",
+              boxShadow: "0 12px 35px rgba(0, 0, 0, 0.45)",
+              color: COLORS.chalk,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+              }}
+            >
+              <div
+                style={{
+                  width: "34px",
+                  height: "34px",
+                  minWidth: "34px",
+                  borderRadius: "50%",
+                  background: COLORS.orange,
+                  color: COLORS.ink,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontWeight: "bold",
+                  fontSize: "18px",
+                }}
+              >
+                !
+              </div>
+
+              <div>
+                <div
+                  style={{
+                    fontWeight: "bold",
+                    marginBottom: "3px",
+                    color: COLORS.orange,
+                  }}
+                >
+                  BOOKING NOTICE
+                </div>
+
+                <div
+                  style={{
+                    fontSize: "14px",
+                    lineHeight: "1.5",
+                    color: COLORS.chalk,
+                  }}
+                >
+                  {toast}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { supabase } from "./supabaseClient";
 import AdminBookings from "./AdminBookings";
 import AdminHistory from "./AdminHistory";
 import AdminSchedule from "./AdminSchedule";
+import AdminRentals from "./AdminRentals";
 
 const COLORS = {
   ink: "#141417",
@@ -296,6 +297,7 @@ export default function AdminDashboard({
             >
               Signed in as {adminUser?.email}
             </div>
+            flexWrap: "wrap",
             <div
                 className="admin-nav"
                 style={{
@@ -378,6 +380,25 @@ export default function AdminDashboard({
                     }}
                     >
                     SCHEDULE
+                </button>
+
+                <button
+                  onClick={() => setAdminView("rentals")}
+                  style={{
+                    padding: "9px 14px",
+                    borderRadius: 6,
+                    background:
+                      adminView === "rentals"
+                        ? COLORS.orange
+                        : COLORS.panelAlt,
+                    color:
+                      adminView === "rentals"
+                        ? COLORS.ink
+                        : COLORS.chalk,
+                    border: `1px solid ${COLORS.line}`,
+                  }}
+                >
+                  RENTALS
                 </button>
 
                 {/* <button
@@ -903,6 +924,10 @@ export default function AdminDashboard({
 
         {adminView === "schedule" && (
             <AdminSchedule />
+        )}
+
+        {adminView === "rentals" && (
+          <AdminRentals />
         )}
 
     </main>

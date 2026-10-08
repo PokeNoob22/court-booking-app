@@ -46,6 +46,12 @@ export default function AdminSchedule() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [sportView, setSportView] = useState("pickleball");
+  const [bookingSlot, setBookingSlot] = useState(null);
+  const [bookingName, setBookingName] = useState("");
+  const [bookingMobile, setBookingMobile] = useState("");
+  const [bookingEmail, setBookingEmail] = useState("");
+  const [bookingDuration, setBookingDuration] = useState(1);
+  const [savingBooking, setSavingBooking] = useState(false);
 
   const loadSchedule = async () => {
     setLoading(true);
@@ -197,6 +203,80 @@ export default function AdminSchedule() {
       color: COLORS.orange,
     };
   };
+
+    const openAdminBooking = (court, hour) => {
+      setBookingSlot({
+        court,
+        hour,
+      });
+
+      setBookingName("");
+      setBookingMobile("");
+      setBookingEmail("");
+      setBookingDuration(1);
+      setMessage("");
+    };
+
+    const closeAdminBooking = () => {
+
+      setBookingSlot(null);
+      setBookingName("");
+      setBookingMobile("");
+      setBookingEmail("");
+      setBookingDuration(1);
+    };
+
+    const createAdminBooking = async () => {
+      if (!bookingSlot || savingBooking) return;
+
+      const name = bookingName.trim();
+      const mobile = bookingMobile.trim();
+      const email = bookingEmail.trim();
+
+      if (!name) {
+        setMessage("Customer name is required.");
+        return;
+      }
+
+      if (!mobile) {
+        setMessage("Customer mobile number is required.");
+        return;
+      }
+
+      setSavingBooking(true);
+      setMessage("");
+
+      try {
+        const { error } = await supabase.rpc(
+          "admin_create_booking",
+          {
+            p_court_id: bookingSlot.court.id,
+            p_booking_date: selectedDate,
+            p_start_hour: bookingSlot.hour,
+            p_duration_hours: Number(bookingDuration),
+            p_customer_name: name,
+            p_customer_mobile: mobile,
+            p_customer_email: email || null,
+          }
+        );
+
+        if (error) throw error;
+
+        closeAdminBooking();
+        await loadSchedule();
+
+        setMessage("Booking created successfully.");
+      } catch (error) {
+        console.error("Error creating admin booking:", error);
+
+        setMessage(
+          error.message ||
+            "Couldn't create the booking. Please try again."
+        );
+      } finally {
+        setSavingBooking(false);
+      }
+    };
 
     const visibleCourts = useMemo(() => {
         if (sportView === "basketball") {
@@ -467,6 +547,11 @@ export default function AdminSchedule() {
                             }}
                             >
                         <div
+                        onClick={() => {
+                          if (!booking) {
+                            openAdminBooking(court, hour);
+                          }
+                        }}
                           style={{
                             minHeight: 64,
                             padding: 8,
@@ -478,6 +563,7 @@ export default function AdminSchedule() {
                             display: "flex",
                             flexDirection: "column",
                             justifyContent: "center",
+                            cursor: !booking ? "pointer" : "default",
                           }}
                         >
                           {!booking ? (
@@ -530,6 +616,253 @@ export default function AdminSchedule() {
           </table>
         </div>
       )}
+
+      {bookingSlot && (
+        <div
+          onClick={() => {
+            if (!savingBooking) {
+              closeAdminBooking();
+            }
+          }}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 1000,
+            background: "rgba(0, 0, 0, 0.68)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 16,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: "100%",
+              maxWidth: 460,
+              background: COLORS.panel,
+              border: `1px solid ${COLORS.line}`,
+              borderRadius: 12,
+              padding: 22,
+              color: COLORS.chalk,
+              boxShadow: "0 20px 60px rgba(0,0,0,0.45)",
+            }}
+          >
+            <div
+              style={{
+                color: COLORS.orange,
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: "0.12em",
+                marginBottom: 5,
+              }}
+            >
+              ADMIN BOOKING
+            </div>
+
+            <div
+              style={{
+                fontSize: 24,
+                fontWeight: 700,
+                marginBottom: 4,
+              }}
+            >
+              {bookingSlot.court.name}
+            </div>
+
+            <div
+              style={{
+                color: COLORS.chalkDim,
+                fontSize: 13,
+                marginBottom: 20,
+              }}
+            >
+              {selectedDate} · {formatHour(bookingSlot.hour)}
+            </div>
+
+            <label
+              style={{
+                display: "block",
+                fontSize: 12,
+                color: COLORS.chalkDim,
+                marginBottom: 5,
+              }}
+            >
+              CUSTOMER NAME
+            </label>
+
+            <input
+              value={bookingName}
+              onChange={(e) => setBookingName(e.target.value)}
+              placeholder="e.g. Juan Dela Cruz"
+              style={{
+                width: "100%",
+                padding: "11px 12px",
+                marginBottom: 14,
+                borderRadius: 6,
+                border: `1px solid ${COLORS.line}`,
+                background: COLORS.ink,
+                color: COLORS.chalk,
+                outline: "none",
+              }}
+            />
+
+            <label
+              style={{
+                display: "block",
+                fontSize: 12,
+                color: COLORS.chalkDim,
+                marginBottom: 5,
+              }}
+            >
+              MOBILE NUMBER
+            </label>
+
+            <input
+              type="tel"
+              value={bookingMobile}
+              onChange={(e) => setBookingMobile(e.target.value)}
+              placeholder="09171234567"
+              style={{
+                width: "100%",
+                padding: "11px 12px",
+                marginBottom: 14,
+                borderRadius: 6,
+                border: `1px solid ${COLORS.line}`,
+                background: COLORS.ink,
+                color: COLORS.chalk,
+                outline: "none",
+              }}
+            />
+
+            <label
+              style={{
+                display: "block",
+                fontSize: 12,
+                color: COLORS.chalkDim,
+                marginBottom: 5,
+              }}
+            >
+              EMAIL — OPTIONAL
+            </label>
+
+            <input
+              type="email"
+              value={bookingEmail}
+              onChange={(e) => setBookingEmail(e.target.value)}
+              placeholder="customer@email.com"
+              style={{
+                width: "100%",
+                padding: "11px 12px",
+                marginBottom: 14,
+                borderRadius: 6,
+                border: `1px solid ${COLORS.line}`,
+                background: COLORS.ink,
+                color: COLORS.chalk,
+                outline: "none",
+              }}
+            />
+
+            <label
+              style={{
+                display: "block",
+                fontSize: 12,
+                color: COLORS.chalkDim,
+                marginBottom: 5,
+              }}
+            >
+              DURATION
+            </label>
+
+            <select
+              value={bookingDuration}
+              onChange={(e) =>
+                setBookingDuration(Number(e.target.value))
+              }
+              style={{
+                width: "100%",
+                padding: "11px 12px",
+                marginBottom: 8,
+                borderRadius: 6,
+                border: `1px solid ${COLORS.line}`,
+                background: COLORS.ink,
+                color: COLORS.chalk,
+                outline: "none",
+              }}
+            >
+              {Array.from(
+                { length: 23 - bookingSlot.hour },
+                (_, index) => index + 1
+              ).map((duration) => (
+                <option key={duration} value={duration}>
+                  {duration} {duration === 1 ? "Hour" : "Hours"}
+                </option>
+              ))}
+            </select>
+
+            <div
+              style={{
+                fontSize: 12,
+                color: COLORS.chalkDim,
+                marginBottom: 20,
+              }}
+            >
+              {formatHour(bookingSlot.hour)}
+              {" – "}
+              {formatHour(
+                bookingSlot.hour + Number(bookingDuration)
+              )}
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                gap: 10,
+              }}
+            >
+              <button
+                type="button"
+                onClick={closeAdminBooking}
+                disabled={savingBooking}
+                style={{
+                  flex: 1,
+                  padding: "12px",
+                  borderRadius: 7,
+                  border: `1px solid ${COLORS.line}`,
+                  background: "transparent",
+                  color: COLORS.chalkDim,
+                  cursor: savingBooking ? "default" : "pointer",
+                  opacity: savingBooking ? 0.6 : 1,
+                }}
+              >
+                CANCEL
+              </button>
+
+              <button
+                type="button"
+                onClick={createAdminBooking}
+                disabled={savingBooking}
+                style={{
+                  flex: 1,
+                  padding: "12px",
+                  borderRadius: 7,
+                  border: `1px solid ${COLORS.orange}`,
+                  background: COLORS.orange,
+                  color: COLORS.ink,
+                  fontWeight: 700,
+                  cursor: savingBooking ? "default" : "pointer",
+                  opacity: savingBooking ? 0.6 : 1,
+                }}
+              >
+                {savingBooking
+                  ? "BOOKING..."
+                  : "BOOK COURT"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
